@@ -1,0 +1,219 @@
+@receiver(post_delete, sender=FB_User)
+def delete_client_from_PtoC(sender, instance, **kwargs):
+    try:
+        client_id = instance.id
+        client_qs = userBusinessTagging.objects.all()
+        for client in client_qs:
+            partner_to_client = client.partnerToClient
+            indices_to_remove = []
+            for i, cli in enumerate(partner_to_client):  # enumerate = it will give index position along with object
+                if cli.get('id') == client_id:
+                    indices_to_remove.append(i)
+            for i in reversed(indices_to_remove):  # reversed = to avoid indices errors
+                del partner_to_client[i]
+            client.save()
+
+    except Exception as e:
+        return Response("error occurred in partner_to_client tagging")
+
+
+@receiver(post_delete, sender=FB_User)
+def delete_client_from_PtoCtoB(sender, instance, **kwargs):
+    try:
+        client_id = instance.id
+        client_qs = userBusinessTagging.objects.all()
+        for client_data in client_qs:
+            client_to_business = client_data.clientToBusiness
+            lis = []
+            for cli in client_to_business:
+                if cli == str(client_id):
+                    lis.append(cli)
+            for cl in lis:
+                del client_to_business[cl]
+            client_data.save()
+
+    except Exception as e:
+        return Response("error occurred in client_to_business tagging")
+
+
+@receiver(post_delete, sender=FB_User)
+def delete_client_from_PtoCtoBtoM(sender, instance, **kwargs):
+    try:
+        client_id = instance.id
+        client_qs = userBusinessTagging.objects.all()
+        for client_data in client_qs:
+            business_to_manager = client_data.businessToManager
+            lis = []
+            for cli in business_to_manager:
+                if cli == str(client_id):
+                    lis.append(cli)
+            for c in lis:
+                del business_to_manager[c]
+            client_data.save()
+
+    except Exception as e:
+        return Response("error occurred in business_to_manager tagging")
+
+
+@receiver(post_delete, sender=FB_User)
+def delete_client_from_PtoCtoBtoMtoE(sender, instance, **kwargs):
+    try:
+        client_id = instance.id
+        client_qs = userBusinessTagging.objects.all()
+        for client_data in client_qs:
+            M_to_E = client_data.managerToEmployee
+            lis = []
+            for cli in M_to_E:
+                if cli == str(client_id):
+                    lis.append(cli)
+            for d in lis:
+                del M_to_E[d]
+            client_data.save()
+
+    except Exception as e:
+        return Response("error occurred in manager_to_employee tagging")
+
+
+@receiver(post_delete, sender=FB_User)
+def delete_client_filing_Invoice(sender, instance, **kwargs):
+    client_id = instance.id
+    eFilingInvoice.objects.filter(client_id).delete()
+
+
+@receiver(post_delete, sender=FB_User)
+def delete_client_gst_years(sender, instance, **kwargs):
+    client_id = instance.id
+    GstrYears.objects.filter(client_id).delete()
+    
+    
+    path('delete_client',views.delete_client)
+--------------------------------------------------------------------------------------------------------------------------
+                          Business
+                          
+                          path('delete_business',views.delete_business),
+                          
+@receiver(post_delete, sender=Business)
+def delete_business_from_partner_to_client(sender, instance, **kwargs):
+    business_id = instance.id
+    all_user_business_tagging = userBusinessTagging.objects.all()
+    for user_business_tagging in all_user_business_tagging:
+        partner_to_client = user_business_tagging.partnerToClient
+        for client_data in partner_to_client:
+            business_list = client_data.get('businessList', [])
+            for index, business_data in enumerate(business_list):
+                if business_data['id'] == business_id:
+                    del business_list[index]
+
+        user_business_tagging.save()
+
+
+@receiver(post_delete, sender=Business)
+def delete_business_from_client_to_business(sender, instance, **kwargs):
+    business_id = instance.id
+    all_businessTagging = userBusinessTagging.objects.all()
+    for cli_business in all_businessTagging:
+        client_to_business = cli_business.clientToBusiness
+        for value in client_to_business.values():
+            for business in value:
+                if business['id'] == int(business_id):
+                    value.remove(business)
+
+        cli_business.save()
+
+
+@receiver(post_delete, sender=Business)
+def delete_business_from_BtoM(sender, instance, **kwargs):
+    business_id = instance.id
+    all_business_tagging = userBusinessTagging.objects.all()
+    for business_data in all_business_tagging:
+        business_to_manager = business_data.businessToManager
+        keys_to_delete = []
+        for k, v in business_to_manager.items():
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
+                    if k1 == str(business_id):
+                        keys_to_delete.append((k, k1))
+
+        for k, k1 in keys_to_delete:
+            del business_to_manager[k][k1]
+        business_data.save()
+
+
+@receiver(post_delete, sender=Business)
+def delete_business_from_MtoE(sender, instance, **kwargs):
+    business_id = instance.id
+    all_taggings = userBusinessTagging.objects.all()
+    for m_to_e in all_taggings:
+        manager_to_employee = m_to_e.managerToEmployee
+        delete_keys = []
+        for k, v in manager_to_employee.items():
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
+                    if k1 == str(business_id):
+                        delete_keys.append((k, k1))
+        for i in delete_keys:
+            del manager_to_employee[k][k1]
+        m_to_e.save()
+
+
+@receiver(post_delete, sender=Business)
+def update_count_in_caFirm_user_details(sender, instance, **kwargs):
+    caFirm_id = instance.ca_admin_id
+
+    if caFirm_id:
+        cou_qs = Business.objects.filter(ca_admin_id=caFirm_id).count()
+
+        CaFirmUserDetails.objects.filter(caFirm_id=caFirm_id).update(business=cou_qs)
+
+
+@receiver(post_delete, sender=Business)
+def delete_business_from_FB_User(sender, instance, **kwargs):
+    admin_id = instance.ca_admin_id
+    business_id = instance.id
+    fb_qs = FB_User.objects.get(id=admin_id)
+
+    business_list = fb_qs.businessList
+    for business in business_list:
+        if business.get('id') == business_id:
+            business_list.remove(business)
+
+    fb_qs.save()                          
+    
+    
+    
+    
+@api_view(['DELETE'])
+def delete_business(request):
+    business_id = request.query_params.get('businessId')
+
+    if not business_id:
+        return Response({'status': 'Provide businessId'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        business_qs = get_object_or_404(Business, id=business_id)
+        business_qs.delete()
+        return Response({'status': 'Business deleted'}, status=status.HTTP_200_OK)
+
+    except Business.DoesNotExist:
+        return Response({'status': 'Business not found or Business already deleted'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+@api_view(['DELETE'])
+def delete_client(request):
+    client_id = request.GET.get('client_id')
+    if client_id is None:
+        return Response('Provide client_id', status=status.HTTP_400_BAD_REQUEST)
+    try:
+        client_qs = get_object_or_404(FB_User,id=client_id)
+        client_qs.delete()
+        return Response({'status': 'client Deleted'}, status=status.HTTP_200_OK)
+    except FB_User.DoesNotExist:
+        return Response("object not found or client deleted already", status=status.HTTP_404_NOT_FOUND)    
+        
+        
+ ===========================================================================
+  
