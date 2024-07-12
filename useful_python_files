@@ -376,3 +376,313 @@ python manage.py migrate user_management
  
 paginator = TaskManagementPagination()
 paginated_qs = paginator.paginate_queryset(qs, request)
+def remove_extra_fields(original_data, test_data):
+
+    if not isinstance(original_data, dict) or not isinstance(test_data, dict):
+        return original_data
+
+    # Keep only key-value pairs that exist in both original_data and test_data
+    filtered_data = dict(filter(lambda item: item[0] in test_data, original_data.items()))
+
+    # Recursively apply the function to nested dictionaries
+    filtered_data = dict(map(lambda item: (item[0], remove_extra_fields(item[1], test_data[item[0]])), filtered_data.items()))
+
+    return filtered_data
+
+
+MASTER_EINVOICE_CLIENT_ID = "c06118f2-0499-49d7-9635-c8f2eb45ac25"
+MASTER_EINVOICE_SECRET_KEY = "e3351012-9fad-45d8-a291-72758fef1572"
+
+class eInvoice():
+    """
+    Class for handling eInvoice filing operations.
+
+    Parameters:
+    - gst_username (str): GST username for authentication.
+    - gst_password (str): GST password for authentication.
+    - gstin (str): GSTIN for the business.
+
+    """
+
+    def __init__(self, gstUsername, gstPassword, gstinNumber):
+        """
+        Constructor for eInvoiceFiling class.
+
+        """
+        self.gstinNumber= gstinNumber
+        self.gstPassword = gstPassword
+        self.gstUsername = gstUsername
+
+
+    def authtoken(self):
+        """
+        Authenticates the user and returns the access token.
+
+        Returns:
+        - str: Access token for eInvoice authentication.
+        """
+        url = f"https://api.mastergst.com/einvoice/authenticate?email={MASTER_GST_EMAIL}"
+        headers = {
+            "UserName": self.gstUsername,
+            "password": self.gstPassword,
+            "ip_address": get_ipaddress(),  # Assuming get_ipaddress() is defined
+            "client_id": MASTER_EINVOICE_CLIENT_ID,
+            "client_secret": MASTER_EINVOICE_SECRET_KEY,
+            "gstin": self.gstinNumber
+        }
+        response = requests.get(url, headers=headers)
+        validate = response.json()
+        token = validate["data"]["AuthToken"]
+        return token
+"""
+    Handles the filing of eInvoice.
+"""
+
+
+@api_view(['POST'])
+def file_Einvoice(request):
+    try:
+        business = request.GET.get('business')
+        gstinNumber = request.GET.get('gstin')
+        gstUsername = request.GET.get('einvoice_username')
+        gstPassword = request.GET.get('einvoice_password')
+        # request_data = request.data.get('data', None)
+        request_data = request.data
+        type = request.GET.get('type', None)
+
+
+        if None in [gstinNumber, gstUsername]:
+            return Response({'error_message': 'Some fields are missing, Please provide valid details'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        e_invoice_filing = eInvoice(gstUsername, gstPassword, gstinNumber)
+
+        access_token = e_invoice_filing.authtoken()
+
+        # resp = {}
+        # resp['business'] = business
+        # resp['gstin'] = gstinNumber
+        # resp['AuthToken'] = access_token
+        # resp['data'] = request_data
+        #
+        # serializer1 = eInvoiceFilingSerializer(data=resp)
+        # if serializer1.is_valid():
+        #     serializer1.save()
+        #     return Response(serializer1.data, status=status.HTTP_200_OK)
+
+        if request_data:
+
+            qs = eInvoiceFiling.objects.filter(gstin=gstinNumber).first()
+
+        existing_object = eInvoiceFilingSerializer(qs).data
+        existing_data = existing_object['data']
+        for key, value in  request_data.items():
+            existing_data[key] = value
+
+        serializer1 = eInvoiceFilingSerializer(qs, existing_object)
+        if serializer1.is_valid():
+            serializer1.save()
+            return Response(serializer1.data, status=status.HTTP_200_OK)
+
+
+        if type == 'save':
+
+            # data1 = copy.deepcopy(existing_data)
+            fdata = remove_extra_fields(existing_object, request_data)
+
+        payload = fdata
+        # Corrected headers section
+        headers = {
+            "ip_address": get_ipaddress(),
+            "client_id": MASTER_EINVOICE_CLIENT_ID,
+            "client_secret": MASTER_EINVOICE_SECRET_KEY,
+            "UserName": gstUsername,
+            "auth-token": access_token,  # Corrected variable name
+            "gstin": gstinNumber
+        }
+
+        url = f'https://api.mastergst.com/einvoice/type/GENERATE/version/V1_03?email={MASTER_GST_EMAIL}'
+        response = requests.post(url, json=payload, headers=headers)
+        response_data = response.json()
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+                                          
+        
+        
+        
+              
+     
+ @api_view(['GET'])
+def managers_to_employees_data(request):
+    """
+    Retrieve data for managers to employees relationship.
+
+    Parameters:
+    - partner_id: The ID of the partner.
+    - manager_id: The ID of the manager.
+
+    Returns:
+    - JSON response containing the first names of employees managed by the specified manager.
+    """
+
+    try:
+        # Extracting partner_id and manager_id from query parameters
+        # partner_id = request.GET.get("partner_id")
+        manager_id = request.GET.get("manager_id")
+
+        # Querying the database for managers related to the specified partner
+        qs = userBusinessTagging.objects.all()
+
+        # Serializing the queryset
+        serialized_data = userBusinessTaggingSerializer(qs, many=True).data
+
+        # Extracting managers' information from the serialized data
+        data=[manager.get("managerToEmployee") for manager in serialized_data  if "managerToEmployee" in manager]
+
+        # Using list comprehension to extract first names of employees
+        first_names = []
+
+        for entry in data:
+            for outer_key, outer_value in entry.items():
+                for inner_key, inner_value in outer_value.items():
+                    for i ,k in inner_value.items():
+                        if i == manager_id:
+                            for user_data in k:
+                                first_name = user_data['first_name']
+                                if first_name:
+                                    first_names.append(first_name)
+
+
+        # Returning the unique managers as a JSON response
+        return Response(first_names , status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Handling and returning an error response for internal server errors
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)       
+        
+        
+path('managers_to_employees_data',views.managers_to_employees_data)
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------
+            MONGO DB UPDATE MANY
+
+
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  {
+    $set: {
+      "task_subtask_data.$[].govt_due_date": new Date("2023-11-21"),
+      "task_subtask_data.$[].internal_due_date": new Date("2023-11-21")
+    }
+  }
+);
+
+
+------------------------------
+       DELETE
+       
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  { $unset: { "task_subtask_data.$[].due_date": "" } }
+);            
+
+
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  {
+    $set: {
+      "task_subtask_data.$[].task_activation_date": new Date("2023-11-21")
+    }
+  }
+);
+
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "id": 1, task_subtask_data.task_id: },
+  { $set: { "task_subtask_data.$.govt_due_date": , "task_subtask_data.$.internal_due_date": } }
+);
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "id": 1, "task_subtask_data.task_id": { $exists: true } },
+  { 
+    $set: { 
+      "task_subtask_data.$.govt_due_date": ,
+      "task_subtask_data.$.internal_due_date": 
+    }
+  }
+);
+
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  { $unset: { "task_subtask_data.$[elem].govt_due_date": { $exists: true } } },
+  
+);
+
+
+---------------------------------------------------------------------------------------------------------------
+                              UPDATE METHOD FOR NESTED AND TOP LEVEL
+                              
+def update_data(original_data, new_data):
+    # Update top-level fields
+    for key, value in new_data.items():
+        if key not in original_data:
+            original_data[key] = value
+
+    # Update task_job_details
+    original_tasks = original_data.get("task_job_details", [])
+    new_tasks = new_data.get("task_job_details", [])
+
+    for original_task, new_task in zip(original_tasks, new_tasks):
+        # Update top-level fields for each task
+        for key, value in new_task.items():
+            if key not in original_task:
+                original_task[key] = value
+
+        # Update subtasks
+        original_subtasks = original_task.get("subtask", [])
+        new_subtasks = new_task.get("subtask", [])
+
+        for original_subtask, new_subtask in zip(original_subtasks, new_subtasks):
+            # Update top-level fields for each subtask
+            for key, value in new_subtask.items():
+                if key not in original_subtask:
+                    original_subtask[key] = value
+
+    return original_data
+
+# Updating data with data1
+updated_data = update_data(data, data1)
+print(updated_data)
+
+for key,value in data1.items():
+    
+    if isinstance(value,list):
+        
+        for v in value:
+            
+            if isinstance(v,dict):
+                for k,v in v.items():
+                   
+                    print(v)
+                    data[k] = v
+print(data)                              
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+user = request.user
+role_id = user.role_id
+user_id = user.id
+firm_id = user.firmID
+if role_id == '1':
+    qs = TaskJobDetails.objects.filter(firmId=user_id)
