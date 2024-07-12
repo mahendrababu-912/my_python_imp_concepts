@@ -1,0 +1,630 @@
+Easy Questions:
+-----------------------
+	Can you write a query to retrieve all columns from the Orders table?
+	SELECT *
+		FROM Orders;
+	How would you select only the order_id and item columns from the Orders table?
+	SELECT order_id,item
+			FROM Orders
+	Write a query to find all orders where the amount is greater than 500.
+	SELECT *
+			FROM Orders where amount>500;
+	How would you find all orders placed by customer_id 4?
+		SELECT *
+			FROM Orders where customer_id=4;
+	How can you retrieve orders where the item is either 'Keyboard' or 'Mouse'?
+		SELECT *
+				FROM Orders where item IN('Keyboard','Mouse');
+	Write a query to find orders where the item starts with 'K'.
+	SELECT *
+		FROM Orders where item Like 'k%';
+	How would you sort the orders by amount in descending order?
+		SELECT *
+			FROM Orders order by amount desc
+			 or asc;
+	How can you limit the result to the top 3 rows?
+	SELECT *
+		FROM Orders order by amount desc limit 3;
+	How can you count the total number of orders?
+	SELECT count(*)
+		FROM Orders ;
+	Write a query to find the total amount of all orders.
+	SELECT sum(amount)
+			FROM Orders ;
+	How would you find the average amount of all orders?
+	SELECT avg(amount)
+		FROM Orders
+	How can you find the smallest order amount?
+	SELECT min(amount)
+		FROM Orders;
+	Write a query to find the largest order amount.
+	SELECT max(amount)
+		FROM Orders;
+Intermediate Questions:
+--------------------------------------
+	How can you group the orders by customer_id and calculate the total amount for each customer?
+		
+	Write a query to find customers who have a total order amount greater than 500.
+	How would you count the number of orders for each customer?
+	How would you join the Orders table with the order_status table to retrieve order details along with their status?
+	Write a query to perform a left join between Orders and order_status to include all orders and their status, if available.
+	How would you perform a right join between Orders and order_status to include all statuses and their orders, if available?
+	Write a query to perform a full outer join between Orders and order_status to include all orders and statuses.
+	How would you use a subquery to find all orders where the amount is greater than the average amount of all orders?
+	Write a query using a subquery in the SELECT clause to include the status of each order from the order_status table.
+	How can you use the EXISTS operator to find all orders that have a corresponding status in the order_status table?
+	Write a query using the NOT EXISTS operator to find all orders that do not have a corresponding status in the order_status table.
+	How can you use the UNION operator to combine the order_id and item columns from the Orders table with the order_id and status columns from the order_status table?
+	Write a query using the UNION ALL operator to do the same as above but include duplicates.
+	How can you use the INTERSECT operator to find common order_ids between the Orders and order_status tables?
+	Write a query using the EXCEPT operator to find order_ids in the Orders table that are not in the order_status table.
+	How can you update the amount of all 'Keyboard' items to be 10% more?
+	Write a query to delete all orders where the item is 'Mousepad'.
+	How would you insert a new order with order_id 6, item 'Laptop', amount 50000, and customer_id 2?
+	How can you insert multiple new orders in one query?
+	How can you use the CASE statement to categorize orders into 'High', 'Medium', and 'Low' based on their amount?
+	Write a query to use the COALESCE function to handle null values in the amount column.
+	How can you use the NULLIF function to avoid division by zero errors?
+	Write a query to cast the amount column to a string.
+	How can you round the amount column to the nearest hundred?
+	How can you concatenate order_id and item into a single string?
+	Write a query to extract the first three characters of the item column.
+	How can you convert the item column to uppercase?
+	Write a query to convert the item column to lowercase.
+	How can you find the length of the item column?
+	Write a query to replace 'Keyboard' with 'KB' in the item column.
+	How can you extract the year from the current date?
+	Write a query to extract the month from the current date.
+	How can you add 10 days to the current date?
+	Write a query to calculate the number of days between '2024-07-01' and the current date.
+Advanced Questions:
+-----------------------------------
+	How can you rank orders by amount using the RANK function?
+	Write a query to use the LAG function to access the previous row's amount.
+	How can you use the LEAD function to access the next row's amount?
+	Write a query to partition the Orders table by customer_id and calculate the total amount for each partition.
+	How can you create a new table NewOrders with the same structure as Orders?
+	Write a query to drop the NewOrders table.
+	How can you add a new column delivery_date to the Orders table?
+	Write a query to drop the delivery_date column from the Orders table.
+	How can you rename the item column to product?
+	How can you add a primary key constraint to the Orders table?
+	Write a query to add a foreign key constraint from Orders to Customers.
+	How can you add a unique constraint to the item column in the Orders table?
+	Write a query to add a check constraint to ensure the amount is always greater than 0.
+	How can you create an index on the customer_id column of the Orders table?
+	Write a query to drop the index on the customer_id column.
+	How can you create a composite index on the order_id and item columns?
+	How can you create a view OrderDetails that joins the Orders and order_status tables?
+	Write a query to drop the OrderDetails view.
+	How can you create a trigger that updates the amount to be 10% more before inserting a new order?
+	Write a query to drop the above trigger.
+	How can you create a stored procedure GetOrders that retrieves all orders?
+	Write a query to call the GetOrders stored procedure.
+	How can you create a function GetOrderCount that returns the total number of orders?
+	Write a query to call the GetOrderCount function.
+	How can you create a temporary table TempOrders with the same structure as Orders?
+	Write a query to drop the TempOrders table.
+	How can you use the ROW_NUMBER function to assign a unique number to each row based on the amount?
+	Write a query to use the DENSE_RANK function to rank orders by amount, allowing for ties.
+	How can you use the FIRST_VALUE function to get the first order amount?
+	Write a query to use the LAST_VALUE function to get the last order amount.
+	How can you use the NTILE function to divide orders into 3 buckets?
+	How can you perform a self join to find all pairs of orders made by the same customer?
+	Write a query to use a cross join to combine every order with every customer.
+	How can you perform a natural join between Orders and order_status?
+	Write a query to use the USING clause in a join.
+	How can you select the top 10 percent of orders by amount?
+	Write a query to select a random sample of 5 orders.
+	How can you use a correlated subquery to find all orders where the amount is greater than the average amount for that customer?
+	How can you update the amount for all orders where the status is 'Pending'?
+	Write a query to delete orders that have been delivered.
+	How can you write a dynamic SQL query to retrieve orders for a given customer_id?
+	How can you merge Orders and NewOrders, updating existing records and inserting new ones?
+	How can you use the CASE statement to replace the item name with 'UNKNOWN' if it is NULL?
+	Write a query to select orders where the amount is more than double the average amount.
+	How can you write a query to find orders that were created within the last 30 days?
+	How can you write a recursive query to generate a sequence of numbers?
+	Write a query to find all orders with their status, using a recursive query if needed.
+	How can you parse JSON data stored in a column in SQL?
+	How can you parse and query XML data stored in a column?
+	How can you pivot the Orders table to show the total amount for each item type?
+	How can you unpivot the Orders table to transform columns into rows?
+	How can you write a query with error handling using TRY...CATCH?
+	How can you grant SELECT permission on the Orders table to a specific user?
+	
+	
+	
+	
+	Can you write a query to retrieve all columns from the Orders table?
+
+sql
+Copy code
+SELECT * FROM Orders;
+How would you select only the order_id and item columns from the Orders table?
+
+sql
+Copy code
+SELECT order_id, item FROM Orders;
+Write a query to find all orders where the amount is greater than 500.
+
+sql
+Copy code
+SELECT * FROM Orders WHERE amount > 500;
+How would you find all orders placed by customer_id 4?
+
+sql
+Copy code
+SELECT * FROM Orders WHERE customer_id = 4;
+How can you retrieve orders where the item is either 'Keyboard' or 'Mouse'?
+
+sql
+Copy code
+SELECT * FROM Orders WHERE item IN ('Keyboard', 'Mouse');
+Write a query to find orders where the item starts with 'K'.
+
+sql
+Copy code
+SELECT * FROM Orders WHERE item LIKE 'K%';
+How would you sort the orders by amount in descending order?
+
+sql
+Copy code
+SELECT * FROM Orders ORDER BY amount DESC;
+How can you limit the result to the top 3 rows?
+
+sql
+Copy code
+SELECT * FROM Orders ORDER BY amount DESC LIMIT 3;
+How can you count the total number of orders?
+
+sql
+Copy code
+SELECT COUNT(*) FROM Orders;
+Write a query to find the total amount of all orders.
+
+sql
+Copy code
+SELECT SUM(amount) FROM Orders;
+How would you find the average amount of all orders?
+
+sql
+Copy code
+SELECT AVG(amount) FROM Orders;
+How can you find the smallest order amount?
+
+sql
+Copy code
+SELECT MIN(amount) FROM Orders;
+Write a query to find the largest order amount.
+
+sql
+Copy code
+SELECT MAX(amount) FROM Orders;
+Intermediate Questions
+How can you group the orders by customer_id and calculate the total amount for each customer?
+
+sql
+Copy code
+SELECT customer_id, SUM(amount) AS total_amount
+FROM Orders
+GROUP BY customer_id;
+Write a query to find customers who have a total order amount greater than 500.
+
+sql
+Copy code
+SELECT customer_id
+FROM Orders
+GROUP BY customer_id
+HAVING SUM(amount) > 500;
+How would you count the number of orders for each customer?
+
+sql
+Copy code
+SELECT customer_id, COUNT(*) AS order_count
+FROM Orders
+GROUP BY customer_id;
+How would you join the Orders table with the order_status table to retrieve order details along with their status?
+
+sql
+Copy code
+SELECT o.*, os.status
+FROM Orders o
+JOIN order_status os ON o.order_id = os.order_id;
+Write a query to perform a left join between Orders and order_status to include all orders and their status, if available.
+
+sql
+Copy code
+SELECT o.*, os.status
+FROM Orders o
+LEFT JOIN order_status os ON o.order_id = os.order_id;
+How would you perform a right join between Orders and order_status to include all statuses and their orders, if available?
+
+sql
+Copy code
+SELECT o.*, os.status
+FROM Orders o
+RIGHT JOIN order_status os ON o.order_id = os.order_id;
+Write a query to perform a full outer join between Orders and order_status to include all orders and statuses.
+
+sql
+Copy code
+SELECT o.*, os.status
+FROM Orders o
+FULL OUTER JOIN order_status os ON o.order_id = os.order_id;
+How would you use a subquery to find all orders where the amount is greater than the average amount of all orders?
+
+sql
+Copy code
+SELECT * FROM Orders
+WHERE amount > (SELECT AVG(amount) FROM Orders);
+Write a query using a subquery in the SELECT clause to include the status of each order from the order_status table.
+
+sql
+Copy code
+SELECT o.*, (SELECT os.status FROM order_status os WHERE os.order_id = o.order_id) AS status
+FROM Orders o;
+How can you use the EXISTS operator to find all orders that have a corresponding status in the order_status table?
+
+sql
+Copy code
+SELECT * FROM Orders o
+WHERE EXISTS (SELECT 1 FROM order_status os WHERE os.order_id = o.order_id);
+Write a query using the NOT EXISTS operator to find all orders that do not have a corresponding status in the order_status table.
+
+sql
+Copy code
+SELECT * FROM Orders o
+WHERE NOT EXISTS (SELECT 1 FROM order_status os WHERE os.order_id = o.order_id);
+How can you use the UNION operator to combine the order_id and item columns from the Orders table with the order_id and status columns from the order_status table?
+
+sql
+Copy code
+SELECT order_id, item FROM Orders
+UNION
+SELECT order_id, status FROM order_status;
+Write a query using the UNION ALL operator to do the same as above but include duplicates.
+
+sql
+Copy code
+SELECT order_id, item FROM Orders
+UNION ALL
+SELECT order_id, status FROM order_status;
+How can you use the INTERSECT operator to find common order_ids between the Orders and order_status tables?
+
+sql
+Copy code
+SELECT order_id FROM Orders
+INTERSECT
+SELECT order_id FROM order_status;
+Write a query using the EXCEPT operator to find order_ids in the Orders table that are not in the order_status table.
+
+sql
+Copy code
+SELECT order_id FROM Orders
+EXCEPT
+SELECT order_id FROM order_status;
+How can you update the amount of all 'Keyboard' items to be 10% more?
+
+sql
+Copy code
+UPDATE Orders
+SET amount = amount * 1.10
+WHERE item = 'Keyboard';
+Write a query to delete all orders where the item is 'Mousepad'.
+
+sql
+Copy code
+DELETE FROM Orders
+WHERE item = 'Mousepad';
+How would you insert a new order with order_id 6, item 'Laptop', amount 50000, and customer_id 2?
+
+sql
+Copy code
+INSERT INTO Orders (order_id, item, amount, customer_id)
+VALUES (6, 'Laptop', 50000, 2);
+How can you insert multiple new orders in one query?
+
+sql
+Copy code
+INSERT INTO Orders (order_id, item, amount, customer_id)
+VALUES 
+    (7, 'Printer', 3000, 3),
+    (8, 'Scanner', 2000, 4);
+How can you use the CASE statement to categorize orders into 'High', 'Medium', and 'Low' based on their amount?
+
+sql
+Copy code
+SELECT order_id, item, amount,
+       CASE
+           WHEN amount > 10000 THEN 'High'
+           WHEN amount BETWEEN 1000 AND 10000 THEN 'Medium'
+           ELSE 'Low'
+       END AS category
+FROM Orders;
+Write a query to use the COALESCE function to handle null values in the amount column.
+
+sql
+Copy code
+SELECT order_id, item, COALESCE(amount, 0) AS amount
+FROM Orders;
+How can you use the NULLIF function to avoid division by zero errors?
+
+sql
+Copy code
+SELECT order_id, item, amount / NULLIF(amount, 0) AS safe_division
+FROM Orders;
+Write a query to cast the amount column to a string.
+
+sql
+Copy code
+SELECT order_id, item, CAST(amount AS VARCHAR) AS amount_str
+FROM Orders;
+How can you round the amount column to the nearest hundred?
+
+sql
+Copy code
+SELECT order_id, item, ROUND(amount, -2) AS rounded_amount
+FROM Orders;
+How can you concatenate order_id and item into a single string?
+
+sql
+Copy code
+SELECT order_id, item, CONCAT(order_id, ' - ', item) AS order_item
+FROM Orders;
+Write a query to extract the first three characters of the item column.
+
+sql
+Copy code
+SELECT order_id, item, SUBSTRING(item, 1, 3) AS item_prefix
+FROM Orders;
+How can you convert the item column to uppercase?
+
+sql
+Copy code
+SELECT order_id, item, UPPER(item) AS item_upper
+FROM Orders;
+Advanced Questions
+Write a query to partition the orders by customer_id and rank them based on amount within each partition.
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       RANK() OVER (PARTITION BY customer_id ORDER BY amount DESC) AS rank
+FROM Orders;
+How can you use the ROW_NUMBER function to assign a unique identifier to each row?
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       ROW_NUMBER() OVER (ORDER BY order_id) AS row_num
+FROM Orders;
+Write a query to use the DENSE_RANK function to handle ties in the ranking.
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       DENSE_RANK() OVER (ORDER BY amount DESC) AS dense_rank
+FROM Orders;
+How can you calculate a running total of amount for each customer_id?
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       SUM(amount) OVER (PARTITION BY customer_id ORDER BY order_id) AS running_total
+FROM Orders;
+Write a query to calculate a moving average of amount for each customer_id.
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       AVG(amount) OVER (PARTITION BY customer_id ORDER BY order_id ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
+FROM Orders;
+How can you use the LEAD function to access the next order_id in the sequence?
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       LEAD(order_id) OVER (ORDER BY order_id) AS next_order_id
+FROM Orders;
+Write a query to use the LAG function to access the previous amount in the sequence.
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       LAG(amount) OVER (ORDER BY order_id) AS previous_amount
+FROM Orders;
+How can you use common table expressions (CTEs) to find the total amount for each customer and then filter for totals greater than 1000?
+
+sql
+Copy code
+WITH TotalAmount AS (
+    SELECT customer_id, SUM(amount) AS total_amount
+    FROM Orders
+    GROUP BY customer_id
+)
+SELECT * FROM TotalAmount
+WHERE total_amount > 1000;
+Write a query using a recursive CTE to generate a series of numbers from 1 to 10.
+
+sql
+Copy code
+WITH RECURSIVE NumberSeries AS (
+    SELECT 1 AS num
+    UNION ALL
+    SELECT num + 1
+    FROM NumberSeries
+    WHERE num < 10
+)
+SELECT num FROM NumberSeries;
+How can you pivot the Orders table to have customer_id as rows and item as columns with the amount as values?
+
+sql
+Copy code
+SELECT customer_id,
+       SUM(CASE WHEN item = 'Keyboard' THEN amount ELSE 0 END) AS Keyboard,
+       SUM(CASE WHEN item = 'Mouse' THEN amount ELSE 0 END) AS Mouse,
+       SUM(CASE WHEN item = 'Monitor' THEN amount ELSE 0 END) AS Monitor,
+       SUM(CASE WHEN item = 'Mousepad' THEN amount ELSE 0 END) AS Mousepad
+FROM Orders
+GROUP BY customer_id;
+Write a query to unpivot the Orders table to have each item and amount as rows for each order_id.
+
+sql
+Copy code
+SELECT order_id, 'Keyboard' AS item, Keyboard AS amount
+FROM Orders
+WHERE Keyboard IS NOT NULL
+UNION ALL
+SELECT order_id, 'Mouse', Mouse
+FROM Orders
+WHERE Mouse IS NOT NULL
+UNION ALL
+SELECT order_id, 'Monitor', Monitor
+FROM Orders
+WHERE Monitor IS NOT NULL
+UNION ALL
+SELECT order_id, 'Mousepad', Mousepad
+FROM Orders
+WHERE Mousepad IS NOT NULL;
+How can you create a stored procedure to retrieve orders for a given customer ID?
+
+sql
+Copy code
+CREATE PROCEDURE GetOrdersByCustomerId(IN cust_id INT)
+BEGIN
+    SELECT * FROM Orders WHERE customer_id = cust_id;
+END;
+Write a stored procedure to insert a new order.
+
+sql
+Copy code
+CREATE PROCEDURE InsertOrder(IN ord_id INT, IN itm VARCHAR(255), IN amt DECIMAL, IN cust_id INT)
+BEGIN
+    INSERT INTO Orders (order_id, item, amount, customer_id)
+    VALUES (ord_id, itm, amt, cust_id);
+END;
+How can you create a trigger to update the status in the order_status table after an order is inserted into the Orders table?
+
+sql
+Copy code
+CREATE TRIGGER AfterOrderInsert
+AFTER INSERT ON Orders
+FOR EACH ROW
+BEGIN
+    INSERT INTO order_status (order_id, status)
+    VALUES (NEW.order_id, 'Pending');
+END;
+Write a query to create an index on the customer_id column of the Orders table.
+
+sql
+Copy code
+CREATE INDEX idx_customer_id ON Orders(customer_id);
+How can you create a view to show the total amount spent by each customer?
+
+sql
+Copy code
+CREATE VIEW CustomerTotalAmount AS
+SELECT customer_id, SUM(amount) AS total_amount
+FROM Orders
+GROUP BY customer_id;
+Write a query to use the view created above.
+
+sql
+Copy code
+SELECT * FROM CustomerTotalAmount;
+How can you create a function to calculate the total amount for a given customer ID?
+
+sql
+Copy code
+CREATE FUNCTION GetTotalAmountByCustomerId(cust_id INT)
+RETURNS DECIMAL
+BEGIN
+    DECLARE total DECIMAL;
+    SELECT SUM(amount) INTO total
+    FROM Orders
+    WHERE customer_id = cust_id;
+    RETURN total;
+END;
+Write a query to call the function created above.
+
+sql
+Copy code
+SELECT GetTotalAmountByCustomerId(4);
+How can you create a temporary table to hold orders with amount greater than 5000?
+
+sql
+Copy code
+CREATE TEMPORARY TABLE HighValueOrders AS
+SELECT * FROM Orders WHERE amount > 5000;
+Write a query to retrieve data from the temporary table created above.
+
+sql
+Copy code
+SELECT * FROM HighValueOrders;
+How can you handle exceptions in a stored procedure?
+
+sql
+Copy code
+CREATE PROCEDURE SafeInsertOrder(IN ord_id INT, IN itm VARCHAR(255), IN amt DECIMAL, IN cust_id INT)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- Handle the error
+        ROLLBACK;
+        SELECT 'An error occurred' AS error_message;
+    END;
+    START TRANSACTION;
+    INSERT INTO Orders (order_id, item, amount, customer_id)
+    VALUES (ord_id, itm, amt, cust_id);
+    COMMIT;
+END;
+Write a query to list the constraints on the Orders table.
+
+sql
+Copy code
+SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+WHERE TABLE_NAME = 'Orders';
+How can you find the size of the Orders table?
+
+sql
+Copy code
+SELECT table_name, round(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
+FROM information_schema.tables
+WHERE table_name = 'Orders';
+Write a query to find the number of rows in the Orders table.
+
+sql
+Copy code
+SELECT COUNT(*) FROM Orders;
+How can you list all indexes on the Orders table?
+
+sql
+Copy code
+SHOW INDEX FROM Orders;
+Write a query to find the customer_id with the highest total order amount.
+
+sql
+Copy code
+SELECT customer_id
+FROM Orders
+GROUP BY customer_id
+ORDER BY SUM(amount) DESC
+LIMIT 1;
+How can you use window functions to rank orders by amount within each customer_id?
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       RANK() OVER (PARTITION BY customer_id ORDER BY amount DESC) AS rank
+FROM Orders;
+Write a query to calculate the cumulative sum of amount for each customer_id.
+
+sql
+Copy code
+SELECT order_id, item, amount, customer_id,
+       SUM(amount) OVER (PARTITION BY customer_id ORDER BY order_id) AS cumulative_sum
+FROM Orders;
+
+
