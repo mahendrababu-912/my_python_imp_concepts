@@ -1,0 +1,378 @@
+@api_view['GET']
+if request.user.role.id==2
+id=request.user.id
+admin_id=request.user.admin.id
+qs=userBusines.objects.filter(firmadmin=admin_id)
+ser_data=userbusinessserializer(qs,many=True).data
+count_client=0
+count_busineses=0
+for eachdata in ser_data:
+k=eachdata.get('partner')
+if eachdata.get(partner)==id
+ptoc=eachdata['partnertoclient]
+for items in ptoc:
+z=items['id']
+if "id" in items:
+count_client+=1
+
+
+
+
+def retryrequest(url,trails=4,errorlist=[400,401,403,500,404]):
+
+    for i in range (trails):
+        try:
+            response=retryrequest(url)
+            if response.status_code in errorlist:
+                continue
+            print(response)
+        except 
+            pass
+        return None
+        
+    
+response=retryrequest('https://scrapeme.live/shop/')
+print(response.text)
+    
+    user=request.user
+    user_id=request.user.id
+    role_id=request.user.role_id
+    firm_id=request.user.firm_id
+
+
+
+
+role_id=1
+user_id=23
+user_email="Farmadmin@mail.com"
+current_low_level_state="approved"
+sales_lead={}
+sales_lead['role_id']=role_id
+sales_lead['user_id']=user_id
+sales_lead['user_email']=user_email
+sales_lead['current_low_level_state']=current_low_level_state
+sales_lead['history']=[{
+        "name": "Alice",
+        "age": 30,
+        "city": "New York"
+}]
+print(sales_lead)
+
+
+
+file= "https://seslambdatrigger-bucket.s3.amazonaws.com/Contractlead_31/Contractfilesigned_2023-12-15_063738.pdf"
+
+slice1=file.split(".com/")
+object_key=slice1[1]
+extractkey=slice1[0]
+bucket=extractkey.split("https://")
+bucketname=bucket[1]
+awsbucket=bucketname.split(".s3.amazonaws")
+awsbucketname=awsbucket[0]
+print(awsbucketname)
+print(object_key)
+
+  db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  {
+    $set: {
+      "task_subtask_data.$[].govt_due_date": new Date("2023-11-21"),
+      "task_subtask_data.$[].internal_due_date": new Date("2023-11-21")
+    }
+  }
+);
+
+
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  {
+    $set: {
+      "task_subtask_data.$[].govt_due_date": new Date("2023-11-21"),
+      "task_subtask_data.$[].internal_due_date": new Date("2023-11-21")
+    }
+  }
+);
+
+db.getCollection('wfm_taskbillingmasterdata').updateMany(
+  { "task_subtask_data.task_id": { $exists: true } },
+  { $unset: { "task_subtask_data.$[].due_date": "" } }
+  
+);
+
+db.wfm_sales_leads.update(
+  { "id": 109 },
+  { $unset: { "leadOverview.companies": "", "leadOverview.companies_remarks": "" } }
+)
+
+db.wfm_sales_leads.updateMany(
+  {}, // Match all documents in the collection
+  { $unset: { "leadOverview.companies": "", "leadOverview.companies_remarks": "" } }
+)
+
+
+
+
+
+db.wfm_sales_leads.updateOne(
+  { "id": 137 }, // Filter documents by the given id
+  [
+    {
+      $set: {
+        "proposal.scope_analysis_data": {
+          $map: {
+            input: "$proposal.scope_analysis_data",
+            as: "scopeData",
+            in: {
+              $mergeObjects: [
+                "$$scopeData",
+                {
+                  "task_billing_proposal": {
+                    $mergeObjects: [
+                      "$$scopeData.task_billing_proposal",
+                      {
+                        "task_subtask": {
+                          $map: {
+                            input: "$$scopeData.task_billing_proposal.task_subtask",
+                            as: "subtask",
+                            in: {
+                              $mergeObjects: [
+                                "$$subtask",
+                                {
+                                  "resource_billing": {
+                                    $map: {
+                                      input: "$$subtask.resource_billing",
+                                      as: "resource",
+                                      in: {
+                                        $mergeObjects: [
+                                          "$$resource",
+                                          {
+                                            "estimated_hours": { $toDouble: "$$resource.estimated_hours" }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+)
+
+
+
+
+
+
+
+propsal-object
+scope_analysis_data- array
+task_billing_proposal -object
+task_subtask -array,
+resource_billing - array
+
+db.wfm_sales_leads.updateOne(
+  { "id": 118 },
+  {
+    "$set": {
+      "proposal.scope_analysis_data.$[].task_billing_proposal.task_subtask.$[].resource_billing.$[].estimated_hours": { "$toDouble": "proposal.scope_analysis_data.$[].task_billing_proposal.task_subtask.$[].resource_billing.$[].estimated_hours" }
+    }
+  }
+) 
+
+
+db.wfm_sales_leads.updateOne(
+  { id: 115 },
+  {
+    $set: {
+      'proposal.contracts_url': []
+    }
+  }
+)
+
+db.user_management_customisation.updateMany({}, {
+  $set: {
+    "wfm_sales": true, 
+    "wfm_task_management": true
+  }
+})
+
+db.user_management_customisation.updateOne({id:11}, {
+  $set: {
+    "wfm_sales": true, 
+    "wfm_task_management": true
+  }
+})
+
+db.wfm_sales_leads.updateMany(
+    {},
+    {
+        '$set': {
+            'proposal.contracts_url': []
+        }
+    }
+)
+
+db.wfm_sales_leads.find({ id: 115 })
+
+
+db.compliance_manager_ititr.updateOne(
+  { id: 7 },
+  {
+    $set: {
+      "business_profession_income.$[].revenue_type_cash": "",
+      "business_profession_income.$[].revenue_type_bank": ""
+    }
+  }
+)
+
+db.compliance_manager_ititr.updateOne(
+  { id: 7 },
+  {
+    $set: {
+      "business_profession_income.$[].revenue_type_cash": "",
+      "business_profession_income.$[].revenue_type_bank": ""
+    }
+  }
+)
+db.compliance_manager_ititr.updateOne(
+  { id: 7 },
+  {
+    $set: {
+      "business_profession_income.$[].revenue_type_cash": "",
+      "business_profession_income.$[].revenue_type_bank": "",
+      "income_sources.Other_Income": false
+    }
+  }
+)
+============================================================================================================================
+                           delete method
+
+def delete_compliance_manager_challan(business_id,client_id):
+    Challan.objects.filter(business_id=business_id,client_id=client_id).delete()
+
+def delete_deducteemaster(business_id,client_id):
+    deducteeMaster.objects.filter(business_id=business_id,client_id=client_id).delete()
+
+def delete_employeeMaster(business_id,client_id):
+    employeeMaster.objects.filter(business_id=business_id,client_id=client_id).delete()
+
+def delete_fema(business_id,client_id):
+    FEMA.objects.filter(business_id=business_id,client_id=client_id).delete()
+def delete_gstr9filing(business_id,client_id):
+    Gstr9Filing.objects.filter(business_id=business_id,client_id=client_id).delete()
+    
+    
+    
+    
+delete_compliance_manager_challan(business_id,client_id)
+    delete_deducteemaster(business_id,client_id)
+    delete_employeeMaster(business_id,client_id)
+    delete_fema(business_id,client_id)
+    delete_gstr9filing(business_id,client_id)
+    delete_gstryears(business_id,client_id)
+    delete_TDS_24Q_Salary_Form(business_id,client_id)
+    
+    
+    
+serializer=[{"3": [{"id": 115, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "Partnership Unregistered", "PAN": "BWIPG4413L", "createdAt": "2024-02-21T12:03:24.890000Z", "updatedAt": "2024-02-21T12:03:24.890000Z", "nameOfBusiness": "SRINIVAS & ASSOCIATES", "client": 3, "ca_admin": 2}], "4": [{"id": 2, "headOffice": {"address": "hyderbad", "pinCode": "500033", "state": "Telangana", "city": "Hyderabad"}, "entityType": "llp", "PAN": "AAJFE9628B", "createdAt": "2023-09-01T06:05:00.918000Z", "updatedAt": "2023-09-01T06:05:00.918000Z", "nameOfBusiness": "Estate Wallet Llp", "client": 4, "ca_admin": 2}], "5": [{"id": 3, "headOffice": {"address": "hyd", "pinCode": "500033", "state": "Telangana", "city": "Hyderabad"}, "entityType": "privateLimitedCompany", "PAN": "AAECJ7310D", "createdAt": "2023-09-01T06:15:47.200000Z", "updatedAt": "2023-12-29T11:32:51.970000Z", "nameOfBusiness": "Jia Interiors Design And Constructions Pvt Ltd", "client": 5, "ca_admin": 2}], "151": [{"id": 122, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "Sole Proprietor", "PAN": "AFGPK1897Q", "createdAt": "2024-02-26T13:25:48.661000Z", "updatedAt": "2024-02-26T13:25:48.662000Z", "nameOfBusiness": "Maheshwari Movies", "client": 151, "ca_admin": 2}], "153": [{"id": 123, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "LLP", "PAN": "ABEFP3967E", "createdAt": "2024-02-27T04:51:54.378000Z", "updatedAt": "2024-02-27T04:51:54.378000Z", "nameOfBusiness": "PRAYAGA AND ASSOCIATES CA LLP", "client": 153, "ca_admin": 2}], "154": [{"id": 124, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "LLP", "PAN": "AAUFD3297J", "createdAt": "2024-02-27T05:45:25.714000Z", "updatedAt": "2024-02-27T05:45:25.714000Z", "nameOfBusiness": "Dataholics LLP", "client": 154, "ca_admin": 2}]},{"4": [{"id": 115, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "Partnership Unregistered", "PAN": "BWIPG4413L", "createdAt": "2024-02-21T12:03:24.890000Z", "updatedAt": "2024-02-21T12:03:24.890000Z", "nameOfBusiness": "SRINIVAS & ASSOCIATES", "client": 3, "ca_admin": 2}], "4": [{"id": 2, "headOffice": {"address": "hyderbad", "pinCode": "500033", "state": "Telangana", "city": "Hyderabad"}, "entityType": "llp", "PAN": "AAJFE9628B", "createdAt": "2023-09-01T06:05:00.918000Z", "updatedAt": "2023-09-01T06:05:00.918000Z", "nameOfBusiness": "Estate Wallet Llp", "client": 4, "ca_admin": 2}], "5": [{"id": 3, "headOffice": {"address": "hyd", "pinCode": "500033", "state": "Telangana", "city": "Hyderabad"}, "entityType": "privateLimitedCompany", "PAN": "AAECJ7310D", "createdAt": "2023-09-01T06:15:47.200000Z", "updatedAt": "2023-12-29T11:32:51.970000Z", "nameOfBusiness": "Jia Interiors Design And Constructions Pvt Ltd", "client": 5, "ca_admin": 2}], "151": [{"id": 122, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "Sole Proprietor", "PAN": "AFGPK1897Q", "createdAt": "2024-02-26T13:25:48.661000Z", "updatedAt": "2024-02-26T13:25:48.662000Z", "nameOfBusiness": "Maheshwari Movies", "client": 151, "ca_admin": 2}], "153": [{"id": 123, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "LLP", "PAN": "ABEFP3967E", "createdAt": "2024-02-27T04:51:54.378000Z", "updatedAt": "2024-02-27T04:51:54.378000Z", "nameOfBusiness": "PRAYAGA AND ASSOCIATES CA LLP", "client": 153, "ca_admin": 2}], "154": [{"id": 124, "headOffice": {"address": 'null', "pinCode": 'null', "state": 'null', "city": 'null'}, "entityType": "LLP", "PAN": "AAUFD3297J", "createdAt": "2024-02-27T05:45:25.714000Z", "updatedAt": "2024-02-27T05:45:25.714000Z", "nameOfBusiness": "Dataholics LLP", "client": 154, "ca_admin": 2}]}]
+business_id = 124
+
+optimized_data = [
+    {k: [k1 for k1 in v if not (isinstance(k1, dict) and k1.get('id') == business_id)] if isinstance(v, list) else v
+     for k, v in business_data.items()} if isinstance(business_data, dict) else business_data
+    for business_data in serializer
+]
+
+print(optimized_data)
+
+# for business_data in serializer:
+#     if isinstance(busi_data, dict):
+#         for k, v in busi_data.items():
+#             if isinstance(v, list):
+#                 for k1 in v:
+#                     if isinstance(k1, dict):
+#                         if k1.get('id') == business_id:
+#                             v.remove(k1) 
+#                             break  
+
+# print(data) 
+
+
+[{'id': 115, 'headOffice': {'address': None, 'pinCode': None, 'state': None, 'city': None}, 'entityType': 'Partnership Unregistered', 'PAN': 'BWIPG4413L', 'createdAt': '2024-02-21T12:03:24.890000Z', 'updatedAt': '2024-02-21T12:03:24.890000Z', 'nameOfBusiness': 'SRINIVAS & ASSOCIATES', 'client': 3, 'ca_admin': 2}]
+
+
+
+# Create a migration for the 'Customization' model in the 'user_management' app
+python manage.py makemigrations user_management --name Customization
+
+# Apply the migration to update the database schema
+python manage.py migrate user_management
+
+                    
+                    
+    def delete(self, request):
+        try:
+
+            sales_leads_id = request.data.get('id')
+            file_path = request.data.get('filepath')
+
+            parsed_url = urllib.parse.urlparse(file_path)
+            if not (parsed_url.netloc and parsed_url.path):
+                return Response({'error_message': 'Invalid file path URL'}, status=status.HTTP_400_BAD_REQUEST)
+
+            bucket_name = parsed_url.netloc.split('.')[0]
+            object_key = parsed_url.path.lstrip('/')
+
+            s3 = boto3.client('s3', region_name=settings.AWS_REGION_NAME, aws_access_key_id=settings.AWS_ACCESS_KEY,
+                              aws_secret_access_key=settings.AWS_SECRET_KEY)
+            try:
+                s3.delete_object(Bucket=bucket_name, Key=object_key)
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'NoSuchKey':
+                    pass
+                else:
+                    raise e
+            qs = sales_leads.objects.get(id=sales_leads_id)
+            ex_data = salesleadsFinalSignOff(qs).data
+
+            # proposal_data = [{'fileObj':'https://seslambdatrigger-bucket.s3.ap-south-1.amazonaws.com/Contract/115/e
+            # +invoice+2+(2).txt'} ,{'fileObj':'https://seslambdatrigger-bucket.s3.ap-south-1.amazonaws.com/Contract
+            # /115/e+invoice+2.txt'}]
+            
+            proposal_data = ex_data['proposal']['contracts_url']
+            for urls in proposal_data:
+                if urls.get('fileObj') == file_path:
+                    proposal_data.remove(urls)
+            ex_data['proposal']['contracts_url'] = proposal_data
+
+            serializer = salesleadsFinalSignOff(qs, data=ex_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+
+            logger.error(e, exc_info=1)
+            return Response({'error_message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)                    
+            
+            
+            
+
+ 
+paginator = TaskManagementPagination()
+paginated_qs = paginator.paginate_queryset(qs, request)
