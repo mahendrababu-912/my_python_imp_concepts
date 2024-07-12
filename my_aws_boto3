@@ -1,0 +1,530 @@
+                                     all aws operations
+--------------------------------------------------------------------------------------
+import io
+import boto3
+from pathlib import Path
+from finance_box_be.settings import AWS_SECRET_KEY, AWS_ACCESS_KEY, TEMP_DIR, AWS_REGION_NAME
+from botocore.exceptions import ClientError
+from botocore.client import Config
+import logging
+from django.conf import settings
+import datetime
+
+import zipfile
+import os
+
+logger = logging.getLogger(__name__)
+
+
+def connetion_aws(service):
+    try:
+        db = boto3.client(service, region_name='ap-south-1', aws_access_key_id=AWS_ACCESS_KEY,
+                          aws_secret_access_key=AWS_SECRET_KEY)
+    except ClientError:
+        logger.error(f'connection aws {service} failed', exc_info=1)
+    return db
+
+
+def upload_to_dynamodb(table_name, data):
+    db = connetion_aws('dynamodb')
+    resp = db.put_item(TableName=table_name, Item=data)
+    return resp
+
+
+######### cognito ###########
+
+def create_user():
+    client = connetion_aws('cognito-idp')
+    response = client.initiate_auth(
+        ClientId='7qsaei6rj2pnb3l8b1f57c3t4k',
+        AuthFlow="USER_PASSWORD_AUTH",
+        AuthParameters={"USERNAME": 'admin', "PASSWORD": 'Financebox@2022'},
+    )
+    if "AuthenticationResult" not in response:
+        challenge = response["ChallengeName"]
+        resp = client.respond_to_auth_challenge(
+            ClientId='7qsaei6rj2pnb3l8b1f57c3t4k',
+            ChallengeName=challenge,
+            Session=response['Session'],
+            ChallengeResponses={
+                'NEW_PASSWORD': 'Financebox@2022',
+                'USERNAME': 'admin',
+                'userAttributes.name': 'admin',
+                'userAttributes.profile': 'admin',
+                'userAttributes.picture': 'admin',
+            },
+
+        )
+        access_token = resp['AuthenticationResult']['AccessToken']
+    else:
+        access_token = response["AuthenticationResult"]["AccessToken"]
+
+    return response, get_user
+
+
+def login(username, password):
+    client = connetion_aws('cognito-idp')
+    response = client.initiate_auth(
+        ClientId='7qsaei6rj2pnb3l8b1f57c3t4k',
+        AuthFlow="USER_PASSWORD_AUTH",
+        AuthParameters={"USERNAME": username, "PASSWORD": password},
+    )
+    access_token = response["AuthenticationResult"]["AccessToken"]
+    return response['AuthenticationResult']
+
+
+def get_role(access_token):
+    client = connetion_aws('cognito-idp')
+    # getting the role name of the user
+    get_user = client.get_user(
+        AccessToken=access_token
+    )
+    for i in get_user['UserAttributes']:
+        if i['Name'] == 'name':
+            k = i['Value']
+    return k
+
+
+def upload_multiple_files(bucket, module, email, files=dict):
+    '''
+    here files is a dict with file_path as key anf value as respective binary file object
+    '''
+
+    s3_object = None
+    s3 = s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
+    upload_status = dict()
+    for file_path, file_obj in files.items():
+        try:
+            file_path = f'{module}/{email}/{file_path}/{file_obj}'
+            s3_object = s3.Bucket(bucket).put_object(Key=file_path, Body=file_obj)
+            logger.info(f'[SUCCESS]:S3 upload:{bucket}/{module}/{email}/{file_path}/{file_obj.name}')
+            upload_status[file_path] = True
+        except ClientError:
+            logger.error(f'[FAILED]:S3 upload:{bucket}/{module}/{email}/{file_path}', exc_info=1)
+            upload_status[file_path] = False
+    return upload_status, f'{bucket}/{module}/{email}'
+
+
+#################### docs management
+
+def upload_file_doc(bucket, file_path, file, object_name=None):
+    """Upload a file to an S3 bucket
+
+    :param bucket: Bucket to upload to
+    :param file_path: full path to upload file
+    :param file: Binary File to upload
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: True if file was uploaded, else False
+    """
+
+    # If S3 object_name was not specified, use file_name
+    if object_name is None:
+        object_name = file_path
+
+    # Upload the file
+    s3_object = None
+    s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
+    try:
+        s3_object = s3.Bucket(bucket).put_object(Key=file_path, Body=file)
+        logger.info(f'[SUCCESS]:S3 upload:{bucket}/{file_path}')
+    except ClientError as e:
+        logger.error(f'[FAILED]:S3 upload:{bucket}/{file_path}', exc_info=1)
+    return s3_object
+
+
+def create_presigned_url_doc(download_path, bucket_name):
+    file_list = dict()
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
+                             aws_secret_access_key=AWS_SECRET_KEY, config=Config(signature_version='s3v4'))
+    response = s3_client.list_objects(Bucket=bucket_name, Prefix=download_path)
+    if 'Contents' in response:
+        for file in response.get('Contents', []):
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object', Params={'Bucket': bucket_name, 'Key': file['Key']}, ExpiresIn=3600)
+            logger.info(f'[SUCCESS]:S3 PRESIGNED:{bucket_name}/{download_path}')
+            file_list[(file['Key'].split("/"))[-1]] = presigned_url
+
+    else:
+        file_list = {'error_message': 'file path not found'}
+    return file_list
+
+
+def create_presigned_url(download_path, bucket_name):
+    file_list = dict()
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
+                             aws_secret_access_key=AWS_SECRET_KEY, config=Config(signature_version='s3v4'))
+    response = s3_client.list_objects(Bucket=bucket_name, Prefix=download_path)
+    for file in response.get('Contents', []):
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object', Params={'Bucket': bucket_name, 'Key': file['Key']}, ExpiresIn=3600)
+        logger.info(f'[SUCCESS]:S3 PRESIGNED:{bucket_name}/{download_path}')
+        file_list[(file['Key'].split("/"))[-1]] = presigned_url
+    return file_list
+
+
+def delete_object_s3(bucket, object_path):
+    try:
+        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
+        # out = s3.Object(bucket, file_path).delete()
+        bucket = s3.Bucket(bucket)
+        if object_path == '' or object_path == '/':
+            logger.info("Invalid Path given")
+            return False
+        objects = bucket.objects.filter(Prefix=object_path)
+        for s3_object in objects:
+            s3_object.delete()
+        logger.info(f"Deleted S3 Object: {bucket}/{object_path}")
+        return True
+    except Exception as e:
+        logger.error(e, exc_info=1)
+        return False
+
+
+def delete_multiple_objects(bucket, objects):
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
+                             aws_secret_access_key=AWS_SECRET_KEY, config=Config(signature_version='s3v4'))
+    response = s3_client.delete_objects(
+        Bucket=bucket,
+        Delete={
+            'Objects': objects,
+            'Quiet': False
+        }
+    )
+    return response
+
+
+def create_multi_files_pressigned_url(file_paths, bucket_name):
+    file_list = dict()
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
+                             aws_secret_access_key=AWS_SECRET_KEY, config=Config(signature_version='s3v4'))
+    for download_path in file_paths:
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object', Params={'Bucket': bucket_name, 'Key': download_path}, ExpiresIn=3600)
+        logger.info(f'[SUCCESS]:S3 PRESIGNED:{bucket_name}/{download_path}')
+        file_list[(download_path.split("/"))[-1]] = presigned_url
+    return file_list
+
+
+def create_presigned_url_usr(download_path, bucket_name):
+    file_list = dict()
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=AWS_ACCESS_KEY,
+                             aws_secret_access_key=AWS_SECRET_KEY,
+                             config=Config(signature_version='s3v4'))
+    response = s3_client.list_objects(Bucket=bucket_name, Prefix=download_path)
+    d = {}
+    if 'Contents' in response:
+        for file in response.get('Contents', []):
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object', Params={'Bucket': bucket_name, 'Key': file['Key']}, ExpiresIn=3600)
+            logger.info(f'[SUCCESS]:S3 PRESIGNED:{bucket_name}/{download_path}')
+            file_list[(file['Key'].split("/"))[-2]] = presigned_url
+    else:
+        d.update({'error_message': 'file path not found'})
+    return file_list, d
+
+
+def upload_file(bucket, file_path, email, file, object_name=None):
+    """Upload a file to an S3 bucket
+
+    :param bucket: Bucket to upload to
+    :param file_path: full path to upload file
+    :param file: Binary File to upload
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: True if file was uploaded, else False
+    """
+
+    # If S3 object_name was not specified, use file_name
+    if object_name is None:
+        object_name = file_path
+
+    # Upload the file
+    s3_object = None
+    s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
+    try:
+        file_path = f"{file_path}"
+        s3_object = s3.Bucket(bucket).put_object(Key=file_path, Body=file)
+        logger.info(f'[SUCCESS]:S3 upload:{bucket}/{file_path}')
+    except ClientError:
+        logger.error(f'[FAILED]:S3 upload:{bucket}/{file_path}', exc_info=1)
+    return {s3_object.key: True}
+
+
+def create_presigned_urls_for_docs_management(bucket, business_name):
+    file_list = {}
+    s3_client = boto3.client('s3', aws_access_key_id='',
+                             aws_secret_access_key='',
+                             config=Config(signature_version='s3v4'))
+    response = s3_client.list_objects(Bucket=bucket, Prefix=f'document-wallet/{business_name}/')
+    for file in response.get('Contents', []):
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object', Params={'Bucket': bucket, 'Key': file['Key']}, ExpiresIn=3600)
+        logger.info(f'[SUCCESS]:S3 PRESIGNED:{bucket}/"document-wallet"/{business_name}')
+        if len(file['Key'].split("/")) > 3:
+            file_list[(file['Key'].split("/"))[-2]] = {(file['Key'].split("/"))[-1]: presigned_url}
+        else:
+            file_list[(file['Key'].split("/"))[-1]] = presigned_url
+    return file_list
+
+
+def zipfolder(foldername, target_dir):
+    zipobj = zipfile.ZipFile(foldername + '.zip', 'w', zipfile.ZIP_DEFLATED)
+    rootlen = len(target_dir) + 1
+    for base, dirs, files in os.walk(target_dir):
+        for file in files:
+            fn = os.path.join(base, file)
+            zipobj.write(fn, fn[rootlen:])
+
+
+def business_folder(key, bucket_name):
+    s3 = boto3.resource('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                        aws_secret_access_key=AWS_SECRET_KEY)
+
+    bucket = s3.Bucket(bucket_name)
+
+    key = key  # 'document-wallet/test1'
+    objs = list(bucket.objects.filter(Prefix=key))
+
+    for obj in objs:
+        # print(obj.key)
+
+        # remove the file name from the object key
+        obj_path = os.path.dirname(obj.key)
+
+        # create nested directory structure
+        Path(obj_path).mkdir(parents=True, exist_ok=True)
+
+        # save file with full path locally
+        bucket.download_file(obj.key, obj.key)
+        zipfolder(obj.key, obj.key)
+        assert os.path.isfile(obj_path)
+        zip_file = open(obj.key, 'r')
+
+        response = HttpResponse(zip_file, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename=name.zip'
+
+        return response
+    return {"message": "file created"}
+
+
+def read_s3_contents_with_download(key, bucket_name):
+    s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                      aws_secret_access_key=AWS_SECRET_KEY)
+    with open('filename', 'wb') as data:
+        k = s3.download_fileobj(bucket_name, key, data)
+    # k = s3.download_fileobj(bucket_name,key)
+    return k
+
+
+def returnOfFilesInBytes(bucket_name,nameOfBusinessOrClient, fileKey=None,currentPath=None):
+    s3bytes = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                           aws_secret_access_key=AWS_SECRET_KEY)
+    if fileKey != None:
+        response = s3bytes.get_object(Bucket=bucket_name, Key=fileKey)
+        file_content = response['Body'].read()
+    else:
+        currentPath = "document-wallet/"+str(nameOfBusinessOrClient)+"/"+currentPath
+        file_content = zip_files_in_s3(bucket_name, currentPath, s3bytes)
+    # elif folderId!=None and folderName!="KYC":
+    #     pass
+    #     # ot_file_path = 'document-wallet' + '/' + businessNameOrClient \
+    #     #                + f"/{folderType}/{folderId}/"
+    #     # file_content = zip_files_in_s3(bucket_name, ot_file_path, s3bytes)
+    # else:
+    #     ot_file_path = 'document-wallet' + '/' + businessNameOrClient \
+    #                    + f"/{folderId}/"
+    #     file_content = zip_files_in_s3(bucket_name, ot_file_path, s3bytes)
+    return file_content
+
+
+def zip_files_in_s3(bucket, prefix, s3):
+    # Get a list of S3 objects with the specified prefix
+    s3_objects = s3.list_objects(Bucket=bucket, Prefix=prefix)
+    if s3_objects.get("Contents", None) != None:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zf:
+            for obj in s3_objects["Contents"]:
+                obj1 = s3.get_object(Bucket=bucket, Key=obj["Key"])
+                zf.writestr(obj["Key"][len(prefix):], obj1["Body"].read())
+        buffer.seek(0)
+        return buffer.read()
+    else:
+        return "No files in folder"
+
+
+import io
+import zipfile
+
+
+def zip_files_from_s3(bucket, prefix, serialized_data, folderType):
+    s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                      aws_secret_access_key=AWS_SECRET_KEY)
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zf:
+        for eachObj in serialized_data:
+            if eachObj.get("folderName").startswith(prefix) == True and folderType == "permanentWorkPapers":
+                folderName = eachObj.get("folderName")[len(prefix):]
+                if folderName != "":
+                    for eachs3Key in eachObj.get("fileKeysArray"):
+                        # zf.writestr(folderName, s3.get_object(Bucket=bucket, Key=eachs3Key.get("fileKeys"))["Body"].read())
+                        fileName = os.path.basename(eachs3Key.get("fileKeys"))
+
+                        # Write the file to the correct directory within the zip file
+                        zf.writestr(os.path.join(folderName, fileName),
+                                    s3.get_object(Bucket=bucket, Key=eachs3Key.get("fileKeys"))["Body"].read())
+                # else:
+                #     folderName = prefix.split('/')[-2]
+                #     for eachs3Key in eachObj.get("fileKeysArray"):
+                #         zf.writestr(folderName, s3.get_object(Bucket=bucket, Key=eachs3Key.get("fileKeys"))["Body"].read())
+        # for obj in get_all_s3_objects(bucket, prefix, s3):
+        #     zf.writestr(obj["Key"], s3.get_object(Bucket=bucket, Key=obj["Key"])["Body"].read())
+    buffer.seek(0)
+    return buffer.read()
+
+
+def get_all_s3_objects(bucket, prefix, s3):
+    """
+    A recursive function to get all the objects in a specified S3 prefix and its subfolders.
+    """
+    paginator = s3.get_paginator('list_objects')
+    operation_parameters = {'Bucket': bucket, 'Prefix': prefix, 'Delimiter': '/'}
+    page_iterator = paginator.paginate(**operation_parameters)
+
+    for page in page_iterator:
+        if "Contents" in page:
+            for obj in page["Contents"]:
+                yield obj
+        if "CommonPrefixes" in page:
+            for folder in page["CommonPrefixes"]:
+                yield from get_all_s3_objects(bucket, folder["Prefix"], s3)
+
+
+def checkPath(bucket_name, file_path):
+    s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                      aws_secret_access_key=AWS_SECRET_KEY)
+    result = s3.list_objects(Bucket=bucket_name, Prefix=file_path)
+    exists = 'Prefix' in result and result['Prefix'] != ''
+    return exists
+
+
+def check_file_exists(bucket_name, file_path):
+    try:
+        s3_client = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                                 aws_secret_access_key=AWS_SECRET_KEY)
+        s3_client.head_object(Bucket=bucket_name, Key=file_path)
+        return True
+    except Exception as e:
+        # If the head_object method raises an exception, it means the file does not exist
+        return False
+
+
+def generate_presigned_url(bucket_name, file_key):
+    s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                      aws_secret_access_key=AWS_SECRET_KEY)
+
+    # Generate a pre-signed URL for the file
+    presigned_url = s3.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': bucket_name, 'Key': file_key},
+        ExpiresIn=3600  # URL expiration time in seconds
+    )
+
+    return presigned_url
+
+
+def create_url_forsinglepath(download_path, bucket_name):
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=AWS_ACCESS_KEY,
+                             region_name='ap-south-1',
+                             aws_secret_access_key=AWS_SECRET_KEY,
+                             config=Config(signature_version='s3v4'))
+
+    object_url = f"https://{bucket_name}.s3.{settings.AWS_REGION_NAME}.amazonaws.com/{download_path}"
+    return object_url
+
+def create_url_forsinglepathS3(download_path, bucket_name):
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=AWS_ACCESS_KEY,
+                             region_name='ap-south-1',
+                             aws_secret_access_key=AWS_SECRET_KEY,
+                             config=Config(signature_version='s3v4'))
+    url = s3_client.generate_presigned_url(ClientMethod='put_object',
+                                          Params={'Bucket': bucket_name, 'Key': download_path})
+
+    # trim query params
+    url = url[0: url.index('?')]
+    return url
+
+def create_presigned_url_forsinglepath_forS3(download_path, bucket_name):
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=AWS_ACCESS_KEY,
+                             region_name='ap-south-1',
+                             aws_secret_access_key=AWS_SECRET_KEY,
+                             config=Config(signature_version='s3v4'))
+    expiration = datetime.datetime.now() + datetime.timedelta(days=365)  # Set the expiration to 1 year from now
+    presigned_url = s3_client.generate_presigned_url(
+        'get_object', Params={'Bucket': bucket_name, 'Key': download_path}, ExpiresIn=expiration)
+    return presigned_url
+
+
+import json
+import requests
+import os  
+
+
+def lambda_handler(event, context):
+    # TODO implement
+    server_url = os.environ['prod_url']
+    url = f"{server_url}/compliance-manager/update-gstr-details-job"
+    url = "http://ec2-13-200-21-209.ap-south-1.compute.amazonaws.com:8000/compliance-manager/update-gstr-details-job"
+    print('Event:', json.dumps(event, indent=2))
+    response = requests.request("GET", url)
+    if response.status_code == 200:
+        print("Request successful with status code:", response.status_code)
+    else:
+        print("Request failed with status code:", response.status_code)
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Hello from Lambda!')
+    }
+    
+    
+    
+    
+    
+                                        download file from s3 or get_object
+--------------------------------------
+def get_object_from_s3(bucket_name, object_key):
+    try:
+        s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                          aws_secret_access_key=AWS_SECRET_KEY)
+        response = s3.get_object(Bucket=bucket_name, Key=object_key)
+        data = response['Body'].read()
+        return data
+    except Exception as e:
+        return Response({'error_message': str(e), 'status_cd': 1},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+                        
+                        presigned_url
+                ----------------------------------------------
+import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from rest_framework.response import Response
+from rest_framework import status
+
+AWS_REGION_NAME = 'your-region'
+AWS_ACCESS_KEY = 'your-access-key'
+AWS_SECRET_KEY = 'your-secret-key'
+
+def generate_presigned_url(bucket_name, object_key, expiration=3600):
+    try:
+        s3 = boto3.client('s3', region_name=AWS_REGION_NAME, aws_access_key_id=AWS_ACCESS_KEY,
+                          aws_secret_access_key=AWS_SECRET_KEY)
+        url = s3.generate_presigned_url('get_object',
+                                        Params={'Bucket': bucket_name, 'Key': object_key},
+                                        ExpiresIn=expiration)
+        return url
+    except Exception as e:
+        return Response({'error_message': str(e), 'status_cd': 1},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
